@@ -4,12 +4,19 @@ import (
 	"context"
 	"fmt"
 	"go-hexagonal/config"
-	"go-hexagonal/modules/mongodb"
 
 	"go-hexagonal/api"
 	userController "go-hexagonal/api/v1/user"
 	userService "go-hexagonal/business/user"
+	migration "go-hexagonal/modules/migration"
 	userRepository "go-hexagonal/modules/user"
+
+	petController "go-hexagonal/api/v1/pet"
+	petService "go-hexagonal/business/pet"
+	petRepository "go-hexagonal/modules/pet"
+
+	authController "go-hexagonal/api/v1/auth"
+	authService "go-hexagonal/business/auth"
 
 	"os"
 	"os/signal"
@@ -17,38 +24,33 @@ import (
 
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func newDatabaseConnection(config *config.AppConfig) *mongo.Database {
-	uri := "mongodb://"
+func newDatabaseConnection(config *config.AppConfig) *gorm.DB {
 
-	if config.AppEnvironment == "prod" {
-		uri = "mongodb+srv://"
+	configDB := map[string]string{
+		"DB_Username": os.Getenv("GOHEXAGONAL_DB_USERNAME"),
+		"DB_Password": os.Getenv("GOHEXAGONAL_DB_PASSWORD"),
+		"DB_Port":     os.Getenv("GOHEXAGONAL_DB_PORT"),
+		"DB_Host":     os.Getenv("GOHEXAGONAL_DB_ADDRESS"),
+		"DB_Name":     os.Getenv("GOHEXAGONAL_DB_NAME"),
 	}
 
-	if config.DbUsername != "" {
-		uri = fmt.Sprintf("%s%v:%v@", uri, config.DbUsername, config.DbPassword)
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
+		configDB["DB_Username"],
+		configDB["DB_Password"],
+		configDB["DB_Host"],
+		configDB["DB_Port"],
+		configDB["DB_Name"])
+
+	db, e := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+	if e != nil {
+		panic(e)
 	}
 
-	if config.AppEnvironment == "prod" {
-		uri = fmt.Sprintf("%s%v/factura?retryWrites=true&w=majority",
-			uri,
-			config.DbAddress,
-		)
-	} else {
-		uri = fmt.Sprintf("%s%v:%v/?connect=direct",
-			uri,
-			config.DbAddress,
-			config.DbPort,
-		)
-	}
-
-	db, err := mongodb.NewDatabaseConnection(uri, config.DbName)
-
-	if err != nil {
-		panic(err)
-	}
+	migration.InitMigrate(db)
 
 	return db
 }
@@ -60,20 +62,35 @@ func main() {
 	//initialize database connection based on given config
 	dbConnection := newDatabaseConnection(config)
 
-	//initiate item repository
-	userRepo := userRepository.NewMongoDBRepository(dbConnection)
+	//initiate user repository
+	userRepo := userRepository.NewGormDBRepository(dbConnection)
 
-	//initiate item service
+	//initiate user service
 	userService := userService.NewService(userRepo)
 
-	//initiate item controller
+	//initiate user controller
 	userController := userController.NewController(userService)
+
+	//initiate pet repository
+	petRepo := petRepository.NewGormDBRepository(dbConnection)
+
+	//initiate pet service
+	petService := petService.NewService(petRepo, userService)
+
+	//initiate pet controller
+	petController := petController.NewController(petService)
+
+	//initiate auth service
+	authService := authService.NewService(userService)
+
+	//initiate auth controller
+	authController := authController.NewController(authService)
 
 	//create echo http
 	e := echo.New()
 
 	//register API path and handler
-	api.RegisterPath(e, userController)
+	api.RegisterPath(e, authController, userController, petController)
 
 	// run server
 	go func() {

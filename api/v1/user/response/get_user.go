@@ -7,10 +7,10 @@ import (
 
 //GetUserResponse Get user by ID response payload
 type GetUserResponse struct {
-	ID         string    `json:"id"`
+	ID         int       `json:"id"`
 	Name       string    `json:"name"`
 	Username   string    `json:"username"`
-	ModifiedAt time.Time `json:"modifiedAt"`
+	ModifiedAt time.Time `json:"modified_at"`
 	Version    int       `json:"version"`
 }
 

@@ -13,8 +13,8 @@ type Repository struct {
 	mock.Mock
 }
 
-// FindAllUserWithPagination provides a mock function with given fields: skip, rowPerPage
-func (_m *Repository) FindAllUserWithPagination(skip int, rowPerPage int) ([]user.User, error) {
+// FindAllUser provides a mock function with given fields: skip, rowPerPage
+func (_m *Repository) FindAllUser(skip int, rowPerPage int) ([]user.User, error) {
 	ret := _m.Called(skip, rowPerPage)
 
 	var r0 []user.User
@@ -37,11 +37,11 @@ func (_m *Repository) FindAllUserWithPagination(skip int, rowPerPage int) ([]use
 }
 
 // FindUserByID provides a mock function with given fields: id
-func (_m *Repository) FindUserByID(id string) (*user.User, error) {
+func (_m *Repository) FindUserByID(id int) (*user.User, error) {
 	ret := _m.Called(id)
 
 	var r0 *user.User
-	if rf, ok := ret.Get(0).(func(string) *user.User); ok {
+	if rf, ok := ret.Get(0).(func(int) *user.User); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
@@ -50,8 +50,31 @@ func (_m *Repository) FindUserByID(id string) (*user.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindUserByUsernameAndPassword provides a mock function with given fields: username, password
+func (_m *Repository) FindUserByUsernameAndPassword(username string, password string) (*user.User, error) {
+	ret := _m.Called(username, password)
+
+	var r0 *user.User
+	if rf, ok := ret.Get(0).(func(string, string) *user.User); ok {
+		r0 = rf(username, password)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*user.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(username, password)
 	} else {
 		r1 = ret.Error(1)
 	}

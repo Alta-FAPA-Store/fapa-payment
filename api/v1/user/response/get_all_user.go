@@ -1,17 +1,13 @@
 package response
 
-import "go-hexagonal/business/user"
+import (
+	"go-hexagonal/api/paginator"
+	"go-hexagonal/business/user"
+)
 
 type getAllUserResponse struct {
-	Meta  meta              `json:"meta"`
+	Meta  paginator.Meta    `json:"meta"`
 	Users []GetUserResponse `json:"users"`
-}
-
-type meta struct {
-	Page         int  `json:"page"`
-	RowPerPage   int  `json:"row_per_page"`
-	NextPage     bool `json:"next_page"`
-	PreviousPage bool `json:"previous_page"`
 }
 
 //NewGetAllUserResponse construct GetAllUserResponse
@@ -22,20 +18,10 @@ func NewGetAllUserResponse(users []user.User, page int, rowPerPage int) getAllUs
 	)
 
 	getAllUserResponse := getAllUserResponse{}
-	getAllUserResponse.Meta.Page = page
-	getAllUserResponse.Meta.RowPerPage = rowPerPage
-	getAllUserResponse.Meta.NextPage = false
-
-	if lenUsers > rowPerPage {
-		getAllUserResponse.Meta.NextPage = true
-	}
-
-	if (lenUsers-1 <= rowPerPage) && (page != 1) {
-		getAllUserResponse.Meta.PreviousPage = true
-	}
+	getAllUserResponse.Meta.BuildMeta(lenUsers, page, rowPerPage)
 
 	for index, value := range users {
-		if index == rowPerPage {
+		if index == getAllUserResponse.Meta.RowPerPage {
 			continue
 		}
 
