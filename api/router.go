@@ -3,6 +3,7 @@ package api
 import (
 	"go-hexagonal/api/middleware"
 	"go-hexagonal/api/v1/auth"
+	"go-hexagonal/api/v1/payment"
 	"go-hexagonal/api/v1/pet"
 	"go-hexagonal/api/v1/user"
 
@@ -10,8 +11,8 @@ import (
 )
 
 //RegisterPath Register all API with routing path
-func RegisterPath(e *echo.Echo, authController *auth.Controller, userController *user.Controller, petController *pet.Controller) {
-	if authController == nil || userController == nil || petController == nil {
+func RegisterPath(e *echo.Echo, authController *auth.Controller, userController *user.Controller, petController *pet.Controller, paymentController *payment.Controller) {
+	if authController == nil || userController == nil || petController == nil || paymentController == nil {
 		panic("Controller parameter cannot be nil")
 	}
 
@@ -35,6 +36,11 @@ func RegisterPath(e *echo.Echo, authController *auth.Controller, userController 
 	petV1.PUT("/:id", petController.UpdatePet)
 	petV1.GET("/:id/user/app", petController.FindPetByIDWithUserDataJoinInAPP)
 	petV1.GET("/:id/user/db", petController.FindPetByIDWithUserDataJoinInDB)
+
+	// Payment endpoint
+	paymentV1 := e.Group("v1/payment")
+	paymentV1.POST("", paymentController.CreatePayment)
+	paymentV1.POST("/notification", paymentController.Notification)
 
 	//health check
 	e.GET("/health", func(c echo.Context) error {
