@@ -46,12 +46,12 @@ func initConfig() *AppConfig {
 
 	defaultConfig.AppPort = 8000
 	defaultConfig.AppEnvironment = ""
-	defaultConfig.DbDriver = "mongodb"
+	defaultConfig.DbDriver = "mysql"
 	defaultConfig.DbAddress = "localhost"
-	defaultConfig.DbPort = 27017
-	defaultConfig.DbUsername = ""
-	defaultConfig.DbPassword = ""
-	defaultConfig.DbName = "hexagonal"
+	defaultConfig.DbPort = 3306
+	defaultConfig.DbUsername = "root"
+	defaultConfig.DbPassword = "root"
+	defaultConfig.DbName = "fapa_store"
 
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("gohexagonal")

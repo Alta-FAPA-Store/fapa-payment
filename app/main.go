@@ -18,6 +18,10 @@ import (
 	authController "go-hexagonal/api/v1/auth"
 	authService "go-hexagonal/business/auth"
 
+	paymentController "go-hexagonal/api/v1/payment"
+	paymentService "go-hexagonal/business/payment"
+	paymentRepository "go-hexagonal/modules/payment"
+
 	"os"
 	"os/signal"
 	"time"
@@ -86,11 +90,17 @@ func main() {
 	//initiate auth controller
 	authController := authController.NewController(authService)
 
+	paymentRepository := paymentRepository.NewGormDBRepository(dbConnection)
+
+	paymentService := paymentService.NewService(paymentRepository)
+
+	paymentController := paymentController.NewController(paymentService)
+
 	//create echo http
 	e := echo.New()
 
 	//register API path and handler
-	api.RegisterPath(e, authController, userController, petController)
+	api.RegisterPath(e, authController, userController, petController, paymentController)
 
 	// run server
 	go func() {
